@@ -37,8 +37,7 @@ namespace RateLimiter
                 rateLimit.Semaphore.Wait();
                 rateLimit.Queue.Enqueue(now);
 
-                // Cleanup old entries asynchronously to keep the queue size in check
-                await CleanupAsync(rateLimit.Semaphore, rateLimit.Queue, now - rateLimit.Period);
+                await CleanupAsync(rateLimit.Semaphore, rateLimit.Queue, now - rateLimit.Period); //Cleanup old entries asynchronously to keep the queue size in check
             }
 
             try
@@ -47,8 +46,7 @@ namespace RateLimiter
             }
             finally
             {
-                // Release the semaphore and remove the action time from the queue
-                foreach (var rateLimit in _rateLimits.Values)
+                foreach (var rateLimit in _rateLimits.Values)   //Release the semaphore and remove the action time from the queue
                 {
                     rateLimit.Queue.TryDequeue(out _);
                     rateLimit.Semaphore.Release();
@@ -73,8 +71,7 @@ namespace RateLimiter
             {
                 DateTime now = DateTime.UtcNow;
 
-                // Clean up old timestamps before checking conditions.
-                while (queue.TryPeek(out DateTime oldest) && (now - oldest > period))
+                while (queue.TryPeek(out DateTime oldest) && (now - oldest > period))   //Clean up old timestamps before checking conditions.
                 {
                     queue.TryDequeue(out _);
                     Console.WriteLine("Old timestamp removed at: " + DateTime.UtcNow.ToString("T"));
@@ -83,27 +80,25 @@ namespace RateLimiter
                 if (queue.Count < limit)
                 {
                     Console.WriteLine("Queue has space. Proceeding...");
-                    break;  // Enough space under the limit to proceed.
+                    break;  //Enough space under the limit to proceed.
                 }
 
-                // Calculate the time until the next possible action can be taken
+                //Calculate the time until the next possible action can be taken
                 DateTime expectedNextPossibleActionTime = queue.OrderBy(x => x).First().Add(period);
                 TimeSpan timeToWait = expectedNextPossibleActionTime.Subtract(DateTime.UtcNow);
 
-                // Ensure we're waiting a reasonable amount of time
-                if (timeToWait.TotalMilliseconds > 0)
+                if (timeToWait.TotalMilliseconds > 0)   //Ensure we're waiting a reasonable amount of time
                 {
                     Console.WriteLine($"Rate limit reached. Queue count: {queue.Count}. Next possible action at: {expectedNextPossibleActionTime:T}. Waiting {timeToWait.TotalSeconds} seconds...");
                     await Task.Delay(timeToWait);
                 }
                 else
                 {
-                    await Task.Delay(100); // Check every 100 ms as fallback
+                    await Task.Delay(100); //Check every 100 ms as fallback
                 }
             }
 
-            // Enqueue the current timestamp when proceeding
-            queue.Enqueue(DateTime.UtcNow);
+            queue.Enqueue(DateTime.UtcNow); //Enqueue the current timestamp when proceeding
         }
 
 
